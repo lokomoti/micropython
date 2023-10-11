@@ -27,7 +27,7 @@ def reverse_bits(byte: bytes) -> bytes:
     return result
 
 
-def _process_buffer(arr):
+def _process_buffer(arr: bytearray) -> bytearray:
     """
     1. byte
     3. byte
@@ -85,7 +85,7 @@ class BusDisplay(framebuf.FrameBuffer):
         self.oe.freq(10000)  # original 1000
         self.oe.duty_u16(self.brightness_min)
 
-    def set_brightness(self, value):
+    def set_brightness(self, value: int) -> None:
         """Brightness setter."""
         self.brightness = int(
             scale(value, 0, 100, self.brightness_min, self.brightness_max)
