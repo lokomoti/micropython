@@ -11,7 +11,7 @@ def scale(
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
-def reverse_bits(byte: bytes) -> bytes:
+def _reverse_bits(byte: bytes) -> bytes:
     """Reverse bits in a byte."""
     result = 0
 
@@ -43,25 +43,46 @@ def _process_buffer(arr: bytearray) -> bytearray:
     for i in range(0, len(arr), 4):
         new_arr.append(arr[i])
         new_arr.append(arr[i + 2])
-        new_arr.append(reverse_bits(arr[i + 3]))
-        new_arr.append(reverse_bits(arr[i + 1]))
+        new_arr.append(_reverse_bits(arr[i + 3]))
+        new_arr.append(_reverse_bits(arr[i + 1]))
 
     return bytearray(reversed(new_arr))
 
 
 class BusDisplay(framebuf.FrameBuffer):
-    """Buster LED display class."""
+    """Bustec BTM140.2 LED display class."""
 
     brightness_max = 40000
     brightness_min = 65535
+    display_height = 16
 
     def __init__(
-        self, din=19, clk=18, le=21, oe=20, width=64, height=16, brightness=100
+        self,
+        sdi: int = 19,
+        clk: int = 18,
+        le: int = 21,
+        oe: int = 20,
+        width: int = 64,
+        brightness: int = 100,
     ):
-        # Create buffer byte array.
-        self.buffer = bytearray((height // 8) * width)
+        """Initialize the display.
+        
+        Pins are interfacing MBI5039 LED driver.
 
-        super().__init__(memoryview(self.buffer), width, height, framebuf.MONO_VLSB)
+        Args:
+            sdi: (SDI) Data input pin.
+            clk: Clock pin.
+            le: Latch pin.
+            oe: Output enable pin.
+            width: Display width.
+            brightness: Display brightness (0-100).
+        """
+        # Create buffer byte array.
+        self.buffer = bytearray((self.display_height // 8) * width)
+
+        super().__init__(
+            memoryview(self.buffer), width, self.display_height, framebuf.MONO_VLSB
+        )
 
         # Display parameters.
         self.brightness = int(
@@ -79,7 +100,7 @@ class BusDisplay(framebuf.FrameBuffer):
             bits=8,
             firstbit=machine.SPI.MSB,
             sck=machine.Pin(clk),
-            mosi=machine.Pin(din),
+            mosi=machine.Pin(sdi),
         )
         # PWM
         self.oe.freq(10000)  # original 1000
